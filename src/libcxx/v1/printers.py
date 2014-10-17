@@ -302,8 +302,12 @@ class StdVectorPrinter:
                               self.val['__bits_per_word'],
                               self.is_bool)
         else:
+            if self.val['__end_cap_']['__first_'] < self.val['__end_']:
+                finish = self.val['__begin_']
+            else:
+                finish = self.val['__end_']
             return self._iterator(self.val['__begin_'],
-                              self.val['__end_'],
+                              finish, # self.val['__end_'],
                               0,
                               self.is_bool)
 
@@ -321,6 +325,8 @@ class StdVectorPrinter:
             end = self.val['__end_cap_']['__first_']
             length = finish - start
             capacity = end - start
+            if capacity < length:
+                length = 0;
             if length == 0:
                 return 'empty %s (capacity=%d)' % (self.typename, int(capacity))
             else:
