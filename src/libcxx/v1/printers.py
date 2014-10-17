@@ -76,7 +76,7 @@ class StdStringPrinter:
             sl = self.val['__r_']['__first_']['__l']
             len = sl['__size_']
             ptr = sl['__data_']
-        
+
         return ptr.string(length = len)
 
     def display_hint (self):
@@ -99,7 +99,7 @@ class SharedPointerPrinter:
                 state = 'expired, weak %d' % weakcount
             else:
                 state = 'count %d, weak %d' % (usecount, weakcount)
-                
+
         return '%s (%s) = %s => %s' % (self.typename, state, self.val['__ptr_'], self.val['__ptr_'].dereference())
 
 class UniquePointerPrinter:
@@ -119,13 +119,13 @@ class StdPairPrinter:
     def __init__ (self, typename, val):
         self.typename = typename
         self.val = val;
-        
+
     def children (self):
 		return [('first', self.val['first']), ('second', self.val['second'])]
 
     def to_string (self):
         return 'pair'
-    
+
 #    def display_hint(self):
 #        return 'array'
 
@@ -137,21 +137,21 @@ class StdTuplePrinter:
             self.head = head['base_']
             self.fields = self.head.type.fields()
             self.count = 0
-        
+
         def __iter__ (self):
             return self
-        
+
         def next (self):
             if self.count >= len(self.fields):
                 raise StopIteration
             self.field = self.head.cast(self.fields[self.count].type)['value']
             self.count += 1
             return ('[%d]' % (self.count - 1), self.field)
-        
+
     def __init__ (self, typename, val):
         self.typename = typename
         self.val = val;
-        
+
     def children (self):
         return self._iterator (self.val)
 
@@ -159,7 +159,7 @@ class StdTuplePrinter:
         if len (self.val.type.fields ()) == 0:
             return 'empty %s' % (self.typename)
         return 'tuple'
-    
+
 #    def display_hint(self):
 #        return 'array'
 
@@ -198,7 +198,7 @@ class StdListPrinter:
         if self.val['__end_']['__next_'] == self.val['__end_'].address:
             return 'empty %s' % (self.typename)
         return '%s' % (self.typename)
-	
+
 #    def display_hint(self):
 #        return 'array'
 
@@ -226,7 +226,7 @@ class StdForwardListPrinter:
         def next(self):
             if self.node == 0:
                 raise StopIteration
-            
+
             result = ('[%d]' % self.count, self.node['__value_'])
             self.count += 1
             self.node = self.node['__next_']
@@ -294,7 +294,7 @@ class StdVectorPrinter:
         for f in val.type.fields():
             if f.name == '__bits_per_word':
                 self.is_bool = 1
- 
+
     def children(self):
         if self.is_bool:
             return self._iterator(self.val['__begin_'],
@@ -302,8 +302,12 @@ class StdVectorPrinter:
                               self.val['__bits_per_word'],
                               self.is_bool)
         else:
+            if self.val['__end_cap_']['__first_'] < self.val['__end_']:
+                finish = self.val['__begin_']
+            else:
+                finish = self.val['__end_']
             return self._iterator(self.val['__begin_'],
-                              self.val['__end_'],
+                              finish, # self.val['__end_'],
                               0,
                               self.is_bool)
 
@@ -321,6 +325,8 @@ class StdVectorPrinter:
             end = self.val['__end_cap_']['__first_']
             length = finish - start
             capacity = end - start
+            if capacity < length:
+                length = 0;
             if length == 0:
                 return 'empty %s (capacity=%d)' % (self.typename, int(capacity))
             else:
@@ -368,22 +374,22 @@ class StdDequePrinter:
             else:
                 self.p = self.mp.dereference() + start % block_size
                 self.end_p = self.end_mp.dereference() + self.end_p % block_size
-            
+
         def __iter__(self):
             return self
 
         def next(self):
             old_p = self.p
-            
+
             self.count += 1
             self.p += 1;
             if (self.p - self.mp.dereference()) == self.block_size:
                 self.mp += 1
                 self.p = self.mp.dereference()
-                
+
             if (self.mp > self.end_mp) or ((self.p > self.end_p) and (self.mp == self.end_mp)):
                 raise StopIteration
-                
+
             return ('[%d]' % int(self.count - 1), old_p.dereference())
 
     def __init__(self, typename, val):
@@ -402,7 +408,7 @@ class StdDequePrinter:
         return self._iterator(self.size, self.val['__block_size'],
                               self.val['__start_'], block_map['__begin_'],
                               block_map['__end_'])
-    
+
 #    def display_hint (self):
 #        return 'array'
 
@@ -450,7 +456,7 @@ class StdBitsetPrinter:
         bits_per_word = self.val['__bits_per_word']
         word_index = 0
         result = []
-        
+
         while word_index < words_count:
             bit_index = 0
             word = words[word_index]
@@ -460,7 +466,7 @@ class StdBitsetPrinter:
                 word >>= 1
                 bit_index += 1
             word_index += 1
-        
+
         return result
 
 class StdSetPrinter:
@@ -474,7 +480,7 @@ class StdSetPrinter:
 
         def __iter__(self):
             return self
-        
+
         def __len__(self):
             return len(self.rbiter)
 
@@ -499,7 +505,7 @@ class StdSetPrinter:
 
     def children (self):
         return self._iterator(self.rbiter)
-    
+
 #    def display_hint (self):
 #        return 'set'
 
@@ -519,7 +525,7 @@ class RbtreeIterator:
     def next(self):
         if self.count == self.size:
             raise StopIteration
-        
+
         result = self.node
         self.count += 1
         if self.count < self.size:
@@ -535,7 +541,7 @@ class RbtreeIterator:
                     node = parent_node
                     parent_node = parent_node.dereference()['__parent_']
                 node = parent_node
-                
+
             self.node = node.cast(self.node_type)
         return result
 
@@ -559,7 +565,7 @@ class StdMapPrinter:
 
         def __iter__(self):
             return self
-        
+
         def __len__(self):
             return len(self.rbiter)
 
@@ -569,7 +575,7 @@ class StdMapPrinter:
             result = ('[%d] %s' % (self.count, str(item['first'])), item['second'])
             self.count += 1
             return result
-        
+
     def __init__ (self, typename, val):
         self.typename = typename
         self.val = val
@@ -605,14 +611,14 @@ class HashtableIterator:
 
     def __iter__ (self):
         return self
-    
+
     def __len__(self):
         return self.size
 
     def next (self):
         if self.node == 0:
             raise StopIteration
-        
+
         node = self.node.dereference()
         result = node['__value_']
         self.node = node['__next_']
