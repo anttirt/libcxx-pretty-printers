@@ -51,7 +51,7 @@ def find_type(orig, name):
         # anything fancier here.
         field = typ.fields()[0]
         if not field.is_base_class:
-            raise ValueError, "Cannot find type %s::%s" % (str(orig), name)
+            raise ValueError("Cannot find type %s::%s" % (str(orig), name))
         typ = field.type
 
 class StdStringPrinter:
@@ -141,7 +141,7 @@ class StdTuplePrinter:
         def __iter__ (self):
             return self
 
-        def next (self):
+        def __next__ (self):
             if self.count >= len(self.fields):
                 raise StopIteration
             self.field = self.head.cast(self.fields[self.count].type)['value']
@@ -176,7 +176,7 @@ class StdListPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             if self.base == self.head:
                 raise StopIteration
             elt = self.base.cast(self.nodetype).dereference()
@@ -223,7 +223,7 @@ class StdForwardListPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             if self.node == 0:
                 raise StopIteration
 
@@ -264,7 +264,7 @@ class StdVectorPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             count = self.count
             self.count = self.count + 1
             if self.bitvec:
@@ -379,7 +379,7 @@ class StdDequePrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             old_p = self.p
 
             self.count += 1
@@ -402,7 +402,7 @@ class StdDequePrinter:
         if self.size == 0:
             return 'empty %s' % self.typename
         else:
-            return '%s (size=%d)' % (self.typename, long(self.size))
+            return '%s (size=%d)' % (self.typename, int(self.size))
 
     def children(self):
         block_map = self.val['__map_']
@@ -485,8 +485,8 @@ class StdSetPrinter:
         def __len__(self):
             return len(self.rbiter)
 
-        def next(self):
-            item = self.rbiter.next()
+        def __next__(self):
+            item = next(self.rbiter)
             item = item.dereference()['__value_']
             result = (('[%d]' % self.count), item)
             self.count += 1
@@ -523,7 +523,7 @@ class RbtreeIterator:
     def __len__(self):
         return int (self.size)
 
-    def next(self):
+    def __next__(self):
         if self.count == self.size:
             raise StopIteration
 
@@ -570,8 +570,8 @@ class StdMapPrinter:
         def __len__(self):
             return len(self.rbiter)
 
-        def next(self):
-            item = self.rbiter.next()
+        def __next__(self):
+            item = next(self.rbiter)
             item = item.dereference()['__value_']
             result = ('[%d] %s' % (self.count, str(item['first'])), item['second'])
             self.count += 1
@@ -616,7 +616,7 @@ class HashtableIterator:
     def __len__(self):
         return self.size
 
-    def next (self):
+    def __next__ (self):
         if self.node == 0:
             raise StopIteration
 
@@ -668,8 +668,8 @@ class UnorderedSetPrinter:
         return '[%d]' % i
 
     def children (self):
-        counter = itertools.imap (self.format_count, itertools.count())
-        return itertools.izip (counter, self.hashtableiter)
+        counter = map (self.format_count, itertools.count())
+        return zip (counter, self.hashtableiter)
 
 class UnorderedMapPrinter:
     "Print a std::unordered_map"
@@ -730,7 +730,7 @@ class Printer(object):
         # A small sanity check.
         # FIXME
         if not self.compiled_rx.match(name + '<>'):
-            raise ValueError, 'libstdc++ programming error: "%s" does not match' % name
+            raise ValueError('libstdc++ programming error: "%s" does not match' % name)
         printer = RxPrinter(name, function)
         self.subprinters.append(printer)
         self.lookup[name] = printer
