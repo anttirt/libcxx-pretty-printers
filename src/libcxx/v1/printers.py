@@ -632,7 +632,10 @@ class StdHashtableIteratorPrinter:
         self.val = val
 
     def to_string (self):
-        return self.val['__node_']['__value_']
+        node = self.val['__node_']
+        if node == 0:
+            return '(end)'
+        return node['__value_']
 
 class StdUnorderedMapIteratorPrinter:
     "Print std::unordered_map::iterator"
@@ -641,8 +644,11 @@ class StdUnorderedMapIteratorPrinter:
         self.val = val
 
     def to_string (self):
-        return '[%s] %s' % (self.val['__i_']['__node_']['__value_']['first'],
-                            self.val['__i_']['__node_']['__value_']['second'])
+        node = self.val['__i_']['__node_']
+        if node == 0:
+            return '(end)'
+        val = node['__value_']['__cc']
+        return '[%s] %s' % (val['first'], val['second'])
 
 class UnorderedSetPrinter:
     "Print a std::unordered_set"
@@ -694,6 +700,7 @@ class UnorderedMapPrinter:
         result = []
         count = 0
         for elt in self.hashtableiter:
+            elt = elt['__cc']
             result.append(('[%d] %s' % (count, str(elt['first'])), elt['second']))
             count += 1
         return result
