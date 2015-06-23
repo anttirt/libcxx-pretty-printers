@@ -647,7 +647,9 @@ class StdUnorderedMapIteratorPrinter:
         node = self.val['__i_']['__node_']
         if node == 0:
             return '(end)'
-        val = node['__value_']['__cc']
+        val = node['__value_']
+        if val.type.get('__cc') is not None:
+            val = val['__cc']
         return '[%s] %s' % (val['first'], val['second'])
 
 class UnorderedSetPrinter:
@@ -700,7 +702,8 @@ class UnorderedMapPrinter:
         result = []
         count = 0
         for elt in self.hashtableiter:
-            elt = elt['__cc']
+            if elt.type.get('__cc') is not None:
+                elt = elt['__cc']
             result.append(('[%d] %s' % (count, str(elt['first'])), elt['second']))
             count += 1
         return result
