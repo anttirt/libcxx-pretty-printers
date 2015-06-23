@@ -121,7 +121,7 @@ class StdPairPrinter:
         self.val = val;
 
     def children (self):
-		return [('first', self.val['first']), ('second', self.val['second'])]
+        return [('first', self.val['first']), ('second', self.val['second'])]
 
     def to_string (self):
         return 'pair'
